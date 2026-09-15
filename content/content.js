@@ -41,6 +41,7 @@ const brFiller = {
     if (type === 'landline') return `(${value.slice(0, 2)}) ${value.slice(2, 6)}-${value.slice(6)}`;
     if (type === 'date') return `${value.slice(0, 2)}/${value.slice(2, 4)}/${value.slice(4, 8)}`;
     if (type === 'date-native') return `${value.slice(4, 8)}-${value.slice(2, 4)}-${value.slice(0, 2)}`;
+    if (type === 'creditcard') return `${value.slice(0, 4)} ${value.slice(4, 8)} ${value.slice(8, 12)} ${value.slice(12, 16)}`;
     return value;
   },
 
@@ -415,6 +416,18 @@ const brFiller = {
       }
       else if (combinedText.includes('senha') || combinedText.includes('password') || input.type === 'password') {
         generatedValue = BrGenerators.password();
+      }
+      else if (combinedText.includes('cartao') || combinedText.includes('cartão') || combinedText.includes('card') || combinedText.includes('ccnum')) {
+        // Se for o nome impresso no cartão
+        if (combinedText.includes('nome') || combinedText.includes('name')) {
+           generatedValue = profile.fullName;
+        } else {
+           const formatted = brFiller.acceptsFormatting(input, 16);
+           generatedValue = formatted ? brFiller.formatData(profile.creditCard, 'creditcard') : profile.creditCard;
+        }
+      }
+      else if (combinedText.includes('cvv') || combinedText.includes('cvc') || combinedText.includes('codigo de seguranca') || combinedText.includes('código de segurança')) {
+        generatedValue = profile.cvv;
       }
       // Outros campos de endereço genéricos
       else if (combinedText.includes('endereco') || combinedText.includes('endereço') || combinedText.includes('address') || combinedText.includes('rua') || combinedText.includes('logradouro')) {

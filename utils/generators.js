@@ -159,7 +159,14 @@ const BrGenerators = {
       landline: BrGenerators.landline(false),
       company: BrGenerators.company(),
       birthdate: BrGenerators.date('birthdate', 'unformatted'),
-      password: BrGenerators.password()
+      password: BrGenerators.password(),
+      creditCard: BrGenerators.randomElement([
+        '4242424242424242', // Visa
+        '5555555555554444', // MasterCard
+        '4000000000000002', // Visa (Decline) apenas para teste ocasional, mas melhor focar no success:
+        '4242424242424242'
+      ]),
+      cvv: String(BrGenerators.randomInt(100, 999))
     };
   }
 };
