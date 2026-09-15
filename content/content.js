@@ -380,10 +380,12 @@ const brFiller = {
           generatedValue = profile.fullName;
         }
       }
-      else if (combinedText.includes('data') || combinedText.includes('date') || combinedText.includes('nascimento') || combinedText.includes('birth') || combinedText.includes('validade') || combinedText.includes('vencimento') || combinedText.includes('expedicao') || combinedText.includes('emissao') || input.type === 'date' || input.type === 'month') {
+      else if (combinedText.includes('data') || combinedText.includes('date') || combinedText.includes('nascimento') || combinedText.includes('birth') || combinedText.includes('validade') || combinedText.includes('vencimento') || combinedText.includes('expir') || combinedText.includes('expiry') || combinedText.includes('mm/yy') || input.type === 'date' || input.type === 'month') {
         
-        // Se não for nascimento, gera uma data nova específica para o contexto
-        if (combinedText.includes('validade') || combinedText.includes('vencimento') || combinedText.includes('expir') || combinedText.includes('expiry')) {
+        const isExpiry = combinedText.includes('validade') || combinedText.includes('vencimento') || combinedText.includes('expir') || combinedText.includes('expiry') || combinedText.includes('mm/yy');
+        
+        // Obter data base não formatada (DDMMYYYY)
+        if (isExpiry) {
           generatedValue = BrGenerators.date('future', 'unformatted');
         } else if (combinedText.includes('expedicao') || combinedText.includes('emissao')) {
           generatedValue = BrGenerators.date('recent', 'unformatted');
@@ -392,25 +394,39 @@ const brFiller = {
           generatedValue = profile.birthdate; 
         }
 
-        let formatType = 'formatted';
-        if (input.type === 'date' || input.type === 'month') {
-           formatType = 'native';
-           generatedValue = brFiller.formatData(generatedValue, 'date-native');
-        } else if (brFiller.acceptsFormatting(input, 8)) {
-           generatedValue = brFiller.formatData(generatedValue, 'date');
+        const maxLength = input.maxLength || parseInt(input.getAttribute('maxlength') || '10', 10);
+        const dd = generatedValue.slice(0, 2);
+        const mm = generatedValue.slice(2, 4);
+        const yyyy = generatedValue.slice(4, 8);
+        const yy = yyyy.slice(2);
+
+        if (input.type === 'date') {
+           generatedValue = `${yyyy}-${mm}-${dd}`;
+        } 
+        else if (input.type === 'month') {
+           generatedValue = `${yyyy}-${mm}`;
         }
-        
-        // Tratamento especial para formatos curtos (ex: Validade de Cartão MM/YY ou MM/YYYY e input type="month")
-        if (input.type === 'month') {
-           generatedValue = generatedValue.substring(0, 7); 
-        } else if (formatType === 'formatted') {
-           const maxLength = input.maxLength || parseInt(input.getAttribute('maxlength') || '20', 10);
-           if (maxLength === 5) {
-             // Retorna apenas MM/YY
-             generatedValue = generatedValue.split('/')[1] + '/' + generatedValue.split('/')[2].slice(2);
+        else if (isExpiry) {
+           // Lógica super inteligente para campos de validade de cartão baseada no limite de caracteres
+           if (maxLength === 4) {
+              generatedValue = `${mm}${yy}`; // MMYY (sem barra)
+           } else if (maxLength === 5) {
+              generatedValue = `${mm}/${yy}`; // MM/YY (com barra)
+           } else if (maxLength === 6) {
+              generatedValue = `${mm}${yyyy}`; // MMYYYY (sem barra)
            } else if (maxLength === 7) {
-             // Retorna MM/YYYY
-             generatedValue = generatedValue.split('/')[1] + '/' + generatedValue.split('/')[2];
+              generatedValue = `${mm}/${yyyy}`; // MM/YYYY (com barra)
+           } else {
+              // Fallback se for um campo longo que apenas tem 'validade' no nome
+              generatedValue = brFiller.acceptsFormatting(input, 8) ? `${dd}/${mm}/${yyyy}` : `${dd}${mm}${yyyy}`;
+           }
+        }
+        else {
+           // Datas genéricas (Nascimento, Emissão)
+           if (brFiller.acceptsFormatting(input, 8)) {
+              generatedValue = `${dd}/${mm}/${yyyy}`;
+           } else {
+              generatedValue = `${dd}${mm}${yyyy}`;
            }
         }
       }
