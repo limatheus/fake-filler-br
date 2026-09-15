@@ -253,7 +253,9 @@ const brFiller = {
       if (brFiller.shouldIgnore(combinedText)) return;
 
       // Regras de Campos Opcionais
-      if (input.type !== 'checkbox' && input.type !== 'radio' && input.tagName.toLowerCase() !== 'select') {
+      const isAddressNumber = combinedText.includes('numero') || combinedText.includes('número') || (combinedText.includes('number') && !combinedText.includes('card') && !combinedText.includes('cartao'));
+      
+      if (input.type !== 'checkbox' && input.type !== 'radio' && input.tagName.toLowerCase() !== 'select' && !isAddressNumber) {
         if (brFiller.isOptional(input, labelText)) return;
       }
 
@@ -449,12 +451,15 @@ const brFiller = {
       brFiller.fillVuetifySelects();
     }
 
-    // Segunda onda: re-executa a varredura após 1.5s para capturar campos 
+    // Segunda e Terceira onda: re-executa a varredura após 1.5s e 3.0s para capturar campos 
     // que foram desbloqueados ou inseridos no DOM por APIs (ex: campo Número após consulta ViaCEP)
     if (!isSecondPass) {
       setTimeout(() => {
         brFiller.fill(scope, true);
       }, 1500);
+      setTimeout(() => {
+        brFiller.fill(scope, true);
+      }, 3000);
     }
   }
 };
